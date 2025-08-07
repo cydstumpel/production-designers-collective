@@ -1,6 +1,7 @@
 :root {
   --background: #fffbf5;
   --text: #000;
+  --accent: hotpink;
   --ratio: 421 / 130;
   --padding: clamp(1rem, 5.5vw, 8rem);
 }
@@ -262,6 +263,43 @@ hr.vertical {
   width: 100%;
   height: 100%;
   clip-path: url(#clip-mask);
+}
+
+.page-header__overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - var(--padding) * 2);
+  z-index: 10;
+  outline: 5px solid var(--background);
+  outline-offset: -2px;
+}
+
+.page-header__overlay::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -2px;
+  right: -2px;
+  bottom: 99%;
+  background: var(--background);
+  z-index: 1;
+}
+.page-header__overlay::after {
+  content: '';
+  position: absolute;
+  top: 99%;
+  left: -2px;
+  right: -2px;
+  bottom: -100%;
+  background: var(--background);
+  z-index: 1;
+}
+
+.page-header__overlay svg {
+  width: 100%;
+  display: block;
 }
 
 .overlay-text {
@@ -771,8 +809,8 @@ hr.vertical {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 105%;
-  height: 105%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   opacity: 0;
   transition: opacity 0.4s ease-out;
