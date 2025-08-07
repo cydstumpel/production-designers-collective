@@ -625,122 +625,100 @@ const initHrs = () => {
 }
 
 // ========================
-// Cards
+// Big Numbers Stagger Text
 // ========================
 
-let cardHeights = [];
-let containerHeight;
-let cards = document.querySelectorAll('.card');
-
-
-const calcTop = (index) => {
-	// top is all the previous cards .card__text height
-	let top = 0;
-	for (let i = 0; i < index; i++) {
-		top += cards[i].querySelector('.card__text').offsetHeight;
-	}
-	return top;
-};
-
-const calcMarginBottom = (index) => {
-	// margin-bottom is all the next cards .card__text height combined
-	let marginBottom = 0;
-	for (let i = index + 1; i < cards.length; i++) {
-		marginBottom += cards[i].querySelector('.card__text').offsetHeight;
-	}
-	return marginBottom;
-};
-
-const calcMarginTop = (index) => {
-	// margin-top is the margin bottom of the previous card but negative
-	if (index === 0) return 0;
-	let marginTop = 0;
-	marginTop = calcMarginBottom(index - 1);
-	return -marginTop;
-};
-
-const calcContainerTop = () => {
-	let top = 0;
-	for (let i = 0; i < cards.length; i++) {
-		top += cards[i].querySelector('.card__text').offsetHeight;
-	}
-	return top;
-};
-
-const calcScrollMargins = () => {
-	cardHeights = [];
-	const container = document.querySelector('.cards');
-	container.style.setProperty('--height', 'unset');
-	containerHeight = container.offsetHeight;
-	const containerTop = calcContainerTop();
-	const lastCardMediaHeight = cards[cards.length - 1].querySelector('.card__media').offsetHeight;
-
-	gsap.set(container, {
-		'--top': `${-lastCardMediaHeight * 2}px`,
-		'--height': `${containerHeight + containerTop}px`,
-		'--margin-bottom': `${-lastCardMediaHeight}px`
-	});
-
-	gsap.set('footer', {
-		'--min-height': `${lastCardMediaHeight}px`,
+const initBigNumbers = () => {
+	const bigNumbers = document.querySelectorAll('.two-column-text__number')
+	if (!bigNumbers) return;
+	const container = document.querySelector('.two-column-text')
+	const tl = gsap.timeline({
+		scrollTrigger: {
+			trigger: container,
+			start: 'top 10%',
+			end: 'bottom bottom',
+			scrub: true,
+		}
 	})
-
-	cards.forEach((card, index) => {
-		const top = calcTop(index);
-		const marginBottom = calcMarginBottom(index);
-		const marginTop = calcMarginTop(index);
-		card.style.setProperty('--top', `${top}px`);
-		card.style.setProperty('--margin-bottom', `${marginBottom}px`);
-		card.style.setProperty('--margin-top', `${marginTop}px`);
-	});
-};
-
-const initCards = () => {
-	cards = document.querySelectorAll('.card');
-	if (!cards) return;
-	cards.forEach((card) => {
-		const cardMedia = card.querySelectorAll('.card__media-item');
-		const cardMediaImg = card.querySelectorAll('.card__media-item img');
-
-		gsap.set(cardMedia, {
-			scale: '1.15',
-			y: '50vh',
-			opacity: 1
-		});
-		gsap.set(cardMediaImg, {
-			scale: 2
-		});
-		gsap
-			.timeline({
-				scrollTrigger: {
-					trigger: card,
-					start: 'top 70%',
-					end: 'top 30%',
-					scrub: true
-				}
-			})
-			.to(cardMedia, {
-				scale: 1,
-				y: 0,
-				duration: 0.5,
-				stagger: {
-					amount: 0.5,
-					from: 'random'
-				}
-			})
-			.to(
-				cardMediaImg,
-				{
-					scale: 1,
-					duration: 0.5
-				},
-				0
-			);
-	});
-	calcScrollMargins();
-
-	window.addEventListener('resize', calcScrollMargins);
+	bigNumbers.forEach((number, index) => {
+		const numberHeading = number.querySelector('h3')
+		const numberText = number.querySelector('p')
+		new SplitText(numberHeading, {
+			type: 'chars, lines',
+			linesClass: 'line',
+			charsClass: 'char',
+			autoSplit: true,
+			onSplit: (self) => {
+				tl.set(self.chars, {
+					y: '100%',
+				})
+				tl.to(self.chars, {
+					stagger: 0.05,
+					y: '0%',
+					ease: 'power4.out',
+				}, index * 1)
+				tl.to(numberText, {
+					opacity: 1,
+					ease: 'power4.out',
+				}, index * 1)
+				tl.to(self.chars, {
+					stagger: 0.05,
+					y: '-100%',
+					ease: 'power4.out',
+				}, index * 1 + 0.7)
+				tl.to(numberText, {
+					opacity: 0,
+					ease: 'power4.out',
+				}, index * 1 + 0.7)
+			}
+		})
+	})
 }
+
+const initClip = () => {
+	const clippedContainer = document.querySelector('.two-column-text')
+	if (!clippedContainer) return;
+
+	gsap.to(clippedContainer, {
+		scrollTrigger: {
+			trigger: clippedContainer,
+			start: 'bottom 110%',
+			end: 'bottom 10%',
+			scrub: true,
+		},
+		clipPath: 'inset(0% 0 100% 0)',
+		duration: 1,
+		ease: 'power4.out',
+	})
+}
+
+
+
+const initScrollMediaText = () => {
+	const scrollMediaText = document.querySelector('.scroll-media-text')
+	if (!scrollMediaText) return;
+	const scrollMedias = scrollMediaText.querySelectorAll('.scroll-media-text__media')
+	scrollMedias.forEach((media, index) => {
+		if (index !== scrollMedias.length - 1) {
+			const scrollMediaTrigger = document.querySelector(`.scroll-media-text__trigger:nth-child(${index + 1})`)
+			const tl = gsap.timeline({
+				scrollTrigger: {
+					trigger: scrollMediaTrigger,
+					start: 'top 80%',
+					end: 'bottom bottom',
+					scrub: true,
+				}
+			})
+			tl.to(media, {
+				clipPath: 'inset(0% 0 100% 0)',
+				duration: 1,
+				ease: 'power4.out',
+			})
+		}
+	})
+}
+
+
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -749,9 +727,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load
 	initHrs()
+	initBigNumbers()
+	initClip()
+	initScrollMediaText()
 	document.fonts.ready.then(function () {
 		initStaggerText()
-		initCards()
 	})
 	// gsap code here!
 });

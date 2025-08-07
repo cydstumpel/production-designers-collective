@@ -1,14 +1,16 @@
 :root {
   --background: #fffbf5;
   --text: #000;
-  --accent: hotpink;
   --ratio: 421 / 130;
   --padding: clamp(1rem, 5.5vw, 8rem);
+  --padding-top: calc(var(--padding) * 0.75);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -106,6 +108,7 @@ hr.vertical {
   clip-path: inset(0 0 100% 0);
 }
 
+.xsmall-body,
 .button,
 .header__item,
 .header__log-in,
@@ -126,7 +129,6 @@ hr.vertical {
   background: var(--text);
   color: var(--background);
 
-  transition: all 0.4s ease-out;
 }
 
 .button__text {
@@ -200,11 +202,13 @@ hr.vertical {
   padding: 0;
 }
 
-.header__item a, .footer__item a {
-  position: relative; 
+.header__item a,
+.footer__item a {
+  position: relative;
 }
 
-.header__item a::before, .footer__item a::before {
+.header__item a::before,
+.footer__item a::before {
   content: '';
   position: absolute;
   bottom: 0;
@@ -216,7 +220,8 @@ hr.vertical {
   transition: clip-path 0.4s ease-out;
 }
 
-.header__item a:hover::before, .footer__item a:hover::before {
+.header__item a:hover::before,
+.footer__item a:hover::before {
   clip-path: inset(0 0 0 0);
 }
 
@@ -233,10 +238,6 @@ hr.vertical {
 .header__log-in a:first-child {
   padding: 0 0.44em;
 }
-
-
-
-
 
 /* ======================== */
 /* Page header */
@@ -286,6 +287,7 @@ hr.vertical {
   background: var(--background);
   z-index: 1;
 }
+
 .page-header__overlay::after {
   content: '';
   position: absolute;
@@ -365,12 +367,23 @@ hr.vertical {
 
 /* Two Column Text */
 .two-column-text {
-  padding: var(--padding);
+  position: relative;
+  z-index: 1;
+  padding: var(--padding-top) var(--padding);
   background: var(--text);
   color: var(--background);
+  min-height: calc(75svh * var(--count));
+}
+
+.two-column-text__inner {
+  position: sticky;
+  top: var(--padding-top);
   display: grid;
+  align-items: center;
   grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 3px auto;
   gap: 0 1rem;
+  min-height: calc(100svh - var(--padding-top) * 2);
 }
 
 .two-column-text ::selection {
@@ -384,124 +397,146 @@ hr.vertical {
 }
 
 .two-column-text hr {
-  grid-column: span 8;
+  grid-column: span 7;
 }
 
 .two-column-text hr+hr {
-  grid-column: span 4;
+  grid-column: span 5;
 }
 
-.two-column-text__title {
-  grid-column: span 8;
-  padding-right: calc(var(--padding) * 2);
+.two-column-text__left {
+  grid-column: span 7;
+  grid-row: 2;
+
+  padding-right: var(--padding);
   padding-top: 1.5rem;
 }
 
 .two-column-text__body {
-  grid-column: span 4;
   padding-top: 1.5rem;
 }
 
-.two-column-text__arrow {
-  grid-column: span 1;
-  width: 100%;
-  padding-top: max(6rem, 12vw);
-  animation: pointDown 3s ease-in-out infinite;
-}
-
-@keyframes pointDown {
-  0% {
-    transform: translateY(0);
-  }
-
-  20% {
-    transform: translateY(20px);
-  }
-
-  30%,
-  100% {
-    transform: translateY(0);
-  }
-}
-
-/* Numbers Text */
-.numbers-text {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 0 1rem;
-  padding: var(--padding) var(--padding) 0;
-}
-
-.numbers-text__left {
-  grid-column: span 8;
+.two-column-text__right {
+  position: relative;
+  grid-column: span 5;
+  grid-row: 2;
+  height: 1.5lh;
   display: flex;
-  gap: var(--padding);
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 0.5rem;
 }
 
-.numbers-text__number {
-  text-align: right;
+.two-column-text__number {
+  height: 1.5lh;
+  position: absolute;
+  top: 0;
 }
 
-.numbers-text__number h3 .line {
+.two-column-text__number .line {
   clip-path: inset(4% -5%) !important;
 }
 
-.numbers-text__number p {
-  margin-top: -0.5em;
-  margin-top: -0.5lh;
+.two-column-text__number .char {
+  transform: translateY(100%) translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
-.numbers-text__right {
-  grid-column: span 4;
-  padding-top: max(1rem, 2vw);
+.two-column-text__number p {
+  text-align: right;
+  opacity: 0;
 }
 
-.numbers-text__right .button {
-  margin-top: 1.6em;
+
+.two-column-text + .scroll-media-text {
+  margin-top: -100svh;
 }
 
 /* ======================== */
-/* Auto Slider */
+/* Scroll Media Text */
 /* ======================== */
-
-.auto-slider {
-  padding: var(--padding) 0 0;
-  overflow: hidden;
+.scroll-media-text {
+  position: relative;
+  padding: var(--padding);
+  min-height: calc(100svh + 30vh * var(--count));
 }
 
-.auto-slider__inner {
+.scroll-media-text__triggers {
+  position: absolute;
+  top: 100svh;
+  left: 0;
+  bottom: 0;
   display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.scroll-media-text__trigger {
+  flex-grow: 1;
+}
+
+.scroll-media-text__inner {
+  position: sticky;
+  top: var(--padding-top);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-left: 1rem;
-  width: max-content;
-  animation: auto-slide calc(5s * var(--count)) linear infinite;
+  gap: 0 1rem;
+  min-height: calc(100svh - var(--padding) * 2);
 }
 
-.auto-slider__item {
-  aspect-ratio: 368 / 276;
-  width: 25vw;
+.scroll-media-text__medias {
+  position: relative;
+  grid-column: span 6;
 }
 
-.auto-slider__item img,
-.auto-slider__item video {
+.scroll-media-text__media {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  background-color: var(--background);
+  z-index: var(--index);
+}
+
+.scroll-media-text__media:nth-child(1) {
+  position: relative;
+}
+
+.scroll-media-text__media p {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.6em;
+}
+
+.scroll-media-text__media img,
+.scroll-media-text__media video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.auto-slider .originals,
-.auto-slider .clones {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  width: 100vw;
-  height: 100%;
-  overflow: hidden;
+.scroll-media-text__text {
+  grid-column: span 5 / -1;
 }
+
+
+.scroll-media-text__text .medium-body {
+  margin-top: 1.33em;
+}
+
+.scroll-media-text__text .button {
+  margin-top: 1.77em;
+}
+
+
+
+
+
 
 /* ======================== */
 /* Cards */
@@ -804,6 +839,7 @@ hr.vertical {
   aspect-ratio: var(--ratio);
   display: block;
 }
+
 .svg-video video {
   position: absolute;
   top: 50%;
