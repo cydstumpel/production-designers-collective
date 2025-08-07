@@ -41,8 +41,8 @@ svg {
 /* Typography */
 @font-face {
   font-family: 'AkzidenzGrotesk';
-  src: url('/AkzidenzGroteskPro-Md.woff2') format('woff2'),
-    url('/AkzidenzGroteskPro-Md.woff') format('woff');
+  src: url('./AkzidenzGroteskPro-Md.woff2') format('woff2'),
+    url('./AkzidenzGroteskPro-Md.woff') format('woff');
   font-weight: 500;
   font-style: normal;
 }
