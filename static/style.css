@@ -72,6 +72,14 @@ a {
   letter-spacing: -0.01em;
 }
 
+.medium-heading {
+  font-size: max(1.75rem, 2.5vw);
+  /* 36px */
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
 .large-body {
   font-size: max(1.5rem, 1.94vw);
   /* 28px */
@@ -184,6 +192,10 @@ hr.vertical {
 .header__logo svg {
   width: 100%;
   height: auto;
+}
+
+.header__logo .svg-video__video {
+  background: var(--text);
 }
 
 .header__logo video {
@@ -684,6 +696,183 @@ hr.vertical {
 }
 
 /* ======================== */
+/* Events */
+/* ======================== */
+
+.events {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 3px auto auto;
+  gap: 1rem;
+  padding: var(--padding-top) var(--padding);
+  background: var(--text);
+  color: var(--background);
+}
+
+.events hr.horizontal {
+  grid-column: span 5;
+}
+
+.events hr.horizontal + hr.horizontal {
+  grid-column: span 7;
+}
+
+.events__heading {
+  grid-column: span 5;
+}
+
+
+
+.events__events {
+  grid-column: span 12;
+  margin-top: var(--padding);
+}
+
+.events__event {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto auto;
+  gap: var(--padding) 1rem;
+}
+
+.events__event:hover .event__logo .svg-video__video video {
+  opacity: 0.8;
+}
+
+.events__event:hover .event__text svg {
+  transform: translate(0.1em, -0.1em);
+}
+
+.event__logo {
+  position: relative;
+  grid-column: span 5;
+  height: max(100px, 8.8vw);
+}
+
+.event__logo a {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.event__logo .svg-video__video {
+  aspect-ratio: var(--ratio);
+  height: 100%;
+  width: unset !important;
+}
+
+.event__logo svg {
+  width: auto;
+  height: 100%;
+}
+
+.event__text {
+  grid-column: span 7;
+  padding-left: var(--padding-top);
+}
+
+.event__text a {
+  text-decoration: none;
+}
+
+.event__text a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.event__text svg {
+  width: 0.38em;
+  height: auto;
+  transition: transform 0.4s ease-out;
+}
+
+.event__text p {
+  margin-top: 1.16em;
+}
+
+.event__media-trail {
+  pointer-events: none; 
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.event__media-trail img,
+.event__media-trail video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  will-change: transform;
+  transform: scale(0);
+  
+  display: block;
+  width: auto;
+  height: max(100px, 9.7vw);
+}
+
+/* ======================== */
+/* Three columns */
+/* ======================== */
+
+
+.three-columns {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1rem;
+  padding: var(--padding);
+  @supports (grid-template-rows: subgrid) {
+    grid-template-rows: 3px auto auto auto;
+  }
+}
+
+.three-columns__column {
+  grid-column: span 4;
+  max-width: 90%;
+  justify-items: start;
+  @supports (grid-template-rows: subgrid) {
+    display: grid;
+    grid-gap: 0;
+    grid-template-rows: subgrid;
+    grid-row: 1 / -1;
+  }
+}
+
+.three-columns__column hr {
+  width: 100%;
+}
+
+.three-columns__column:nth-child(2) {
+  justify-self: center;
+}
+
+.three-columns__column:nth-child(3) {
+  justify-self: end;
+}
+
+.three-columns__heading {
+  margin-top: 0.88em;
+}
+
+.three-columns__column .p {
+  margin-top: 1.16em;
+}
+
+.three-columns__column .button {
+  margin-top: 1.77em;
+}
+
+
+
+
+/* ======================== */
 /* Scroll trigger clippers */
 /* ======================== */
 
@@ -715,7 +904,6 @@ hr.vertical {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: var(--min-height, 50vh);
   position: relative;
   z-index: 1;
   padding: calc(var(--padding) / 2) var(--padding) 1rem;
@@ -730,10 +918,6 @@ hr.vertical {
 
 .footer a {
   text-decoration: none;
-}
-
-.footer .svg-video__video {
-  background: var(--background);
 }
 
 .footer__link {
@@ -828,7 +1012,7 @@ hr.vertical {
 }
 
 .svg-video__video {
-  background: var(--text);
+  background: var(--background);
 }
 
 .svg-video .svg-video__video {

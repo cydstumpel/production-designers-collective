@@ -10,7 +10,7 @@ let restoreTime = 5;
 let radius = window.innerWidth / 48;
 let blur = 1;
 let enabled = true;
-
+const mm = gsap.matchMedia()
 
 const distanceBetween = (point1, point2) => {
 	return Math.sqrt(
@@ -718,7 +718,171 @@ const initScrollMediaText = () => {
 	})
 }
 
+export const initMediaTrail = () => {
+	const mediaTrails = document.querySelectorAll('.events__event')
+	if (!mediaTrails) return
+	mm.add('(prefers-reduced-motion: no-preference) and (min-width: 1024px)', () => {
+		mediaTrails.forEach(mediaTrail => {
+			new MediaTrail({
+				media: mediaTrail.querySelectorAll('.event__media-trail img, .event__media-trail video'),
+				mediaContainer: mediaTrail
+			})
+		})
+	})
+}
 
+class MediaTrail {
+	constructor(options) {
+		this.media = options.media
+		if (!this.media) return
+		this.mediaContainer = options.mediaContainer
+		this.hoverContainer = options.hoverContainer || document.body
+		this.mathUtils = {
+			// linear interpolation
+			lerp: (a, b, n) => (1 - n) * a + n * b,
+			// distance between two points
+			distance: (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1)
+		}
+		this.mousePos = this.lastMousePos = this.cacheMousePos = { x: 0, y: 0 }
+		this.mouseEvents()
+		this.init()
+	}
+	mouseEvents() {
+		this.mediaContainer.addEventListener('mousemove', ev => this.mousePos = this.getMousePos(ev))
+	}
+	getMousePos(ev) {
+		let posx = 0
+		let posy = 0
+
+		posx = ev.clientX
+		posy = ev.clientY
+		return { x: posx, y: posy }
+	}
+	getMouseDistance() {
+		// gets the distance from the current mouse position to the last recorded mouse position
+		return this.mathUtils.distance(this.mousePos.x, this.mousePos.y, this.lastMousePos.x, this.lastMousePos.y)
+	}
+	init() {
+		// images container
+		this.DOM = { content: this.mediaContainer }
+		// array of Image objs, one per image element
+		this.mediaItems = []
+		this.media.forEach(media => this.mediaItems.push(new Media(media)))
+		// total number of images
+		this.mediaTotal = this.mediaItems.length
+		// upcoming image index
+		this.mediaPosition = 0
+		// zIndex value to apply to the upcoming image
+		this.zIndexVal = 1
+		// mouse distance required to show the next image
+		this.threshold = window.innerWidth / 24 * 4
+		// render the images
+		requestAnimationFrame(() => this.render())
+	}
+	render() {
+		// get distance between the current mouse position and the position of the previous image
+		let distance = this.getMouseDistance()
+		// cache previous mouse position
+		this.cacheMousePos.x = this.mathUtils.lerp(this.cacheMousePos.x || this.mousePos.x, this.mousePos.x, 0.1)
+		this.cacheMousePos.y = this.mathUtils.lerp(this.cacheMousePos.y || this.mousePos.y, this.mousePos.y, 0.1)
+
+		// if the mouse moved more than [this.threshold] then show the next image
+		if (distance > this.threshold) {
+			this.showNextImage()
+
+			++this.zIndexVal
+			this.mediaPosition = this.mediaPosition < this.mediaTotal - 1 ? this.mediaPosition + 1 : 0
+
+			this.lastMousePos = this.mousePos
+		}
+
+		// check when mousemove stops and all images are inactive (not visible and not animating)
+		let isIdle = true
+		for (let media of this.media) {
+			if (gsap.isTweening(media) || media.style.opacity != 0) {
+				isIdle = false
+				break
+			}
+		}
+		// reset z-index initial value
+		if (isIdle && this.zIndexVal !== 1) {
+			this.zIndexVal = 1
+		}
+
+		// loop..
+		requestAnimationFrame(() => this.render())
+	}
+	showNextImage() {
+		// show image at position [this.mediaPosition]
+		const mediaItem = this.mediaItems[this.mediaPosition]
+		// kill any tween on the image
+		gsap.killTweensOf(mediaItem.DOM.el)
+
+		gsap.timeline()
+			.set(mediaItem.DOM.el, {
+				startAt: { opacity: 0 },
+				autoAlpha: 1,
+				zIndex: this.zIndexVal,
+				x: this.cacheMousePos.x - mediaItem.rect.width / 2,
+				y: this.cacheMousePos.y - mediaItem.rect.height / 2,
+				ease: 'expo.easeOut',
+				duration: 0.3
+			})
+			// animate position
+			.to(mediaItem.DOM.el, {
+				ease: 'expo.easeOut',
+				scale: 1,
+				x: this.mousePos.x - mediaItem.rect.width / 2,
+				y: this.mousePos.y - mediaItem.rect.height / 2
+			})
+			// then make it disappear
+			.to(mediaItem.DOM.el, {
+				ease: 'power1.easeOut',
+				scale: 0,
+				// y: '+='+window.innerHeight,
+				duration: 0.5
+			}, 1)
+			.to(mediaItem.DOM.el, {
+				autoAlpha: 0,
+				duration: 0.1
+			}, 1)
+		// scale down the image
+	}
+}
+
+class Media {
+	constructor(el) {
+		this.DOM = { el: el }
+		// image deafult styles
+		this.defaultStyle = {
+			scale: 1,
+			x: 0,
+			y: 0,
+			opacity: 0
+		}
+		// get sizes/position
+		this.getRect()
+		// init/bind events
+		this.initEvents()
+	}
+	initEvents() {
+		// on resize get updated sizes/position
+		window.addEventListener('resize', () => this.resize())
+	}
+	resize() {
+		// reset styles
+		gsap.set(this.DOM.el, this.defaultStyle)
+		// get sizes/position
+		this.getRect()
+	}
+	getRect() {
+		this.rect = this.DOM.el.getBoundingClientRect()
+	}
+	isActive() {
+		// check if image is animating or if it's visible
+		return gsap.isTweening(this.DOM.el) || this.DOM.el.style.opacity != 0
+	}
+}
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -730,6 +894,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 	initBigNumbers()
 	initClip()
 	initScrollMediaText()
+	initMediaTrail()
 	document.fonts.ready.then(function () {
 		initStaggerText()
 	})
