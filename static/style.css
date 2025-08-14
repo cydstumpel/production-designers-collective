@@ -1,6 +1,7 @@
 :root {
   --background: #fffbf5;
   --text: #000;
+  --accent: #FF5846;
   --ratio: 421 / 130;
   --padding: clamp(1rem, 5.5vw, 8rem);
   --padding-top: calc(var(--padding) * 0.75);
@@ -57,8 +58,8 @@ a {
 }
 
 .huge-heading {
-  font-size: max(3.5rem, 11vw);
-  /* 160px */
+  font-size: max(3.5rem, 12.7vw);
+  /* 184px */
   line-height: 1;
   font-weight: 500;
   letter-spacing: -0.05em;
@@ -381,21 +382,40 @@ hr.vertical {
 .two-column-text {
   position: relative;
   z-index: 1;
-  padding: var(--padding-top) var(--padding);
   background: var(--text);
   color: var(--background);
   min-height: calc(75svh * var(--count));
 }
 
+.two-column-text__triggers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 110svh;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  width: 10px;
+}
+
+.two-column-text__trigger {
+  flex-grow: 1;
+}
+
 .two-column-text__inner {
   position: sticky;
-  top: var(--padding-top);
+  top: 0;
+  min-height: calc(100svh - var(--padding-top) * 2);
+}
+
+.two-column-text__text {
   display: grid;
   align-items: center;
   grid-template-columns: repeat(12, 1fr);
   grid-template-rows: 3px auto;
   gap: 0 1rem;
-  min-height: calc(100svh - var(--padding-top) * 2);
+  padding: var(--padding-top) var(--padding) calc(var(--padding) * 2);
+  z-index: 1;
 }
 
 .two-column-text ::selection {
@@ -426,6 +446,7 @@ hr.vertical {
 
 .two-column-text__body {
   padding-top: 1.5rem;
+  padding-right: calc(var(--padding) * 2);
 }
 
 .two-column-text__right {
@@ -450,9 +471,17 @@ hr.vertical {
 }
 
 .two-column-text__number .char {
-  transform: translateY(100%) translateZ(0);
+  transform: translateY(100%) translateZ(1px);
   will-change: transform;
   backface-visibility: hidden;
+}
+
+.two-column-text__number:first-child .char {
+  transform: translateZ(1px);
+}
+
+.two-column-text__number:first-child p {
+  opacity: 1;
 }
 
 .two-column-text__number p {
@@ -460,50 +489,31 @@ hr.vertical {
   opacity: 0;
 }
 
-
-.two-column-text + .scroll-media-text {
-  margin-top: -100svh;
-}
-
 /* ======================== */
-/* Scroll Media Text */
+/* Media Text */
 /* ======================== */
-.scroll-media-text {
+.media-text {
+  background: var(--background);
+  color: var(--text);
   position: relative;
   padding: var(--padding);
-  min-height: calc(100svh + 30vh * var(--count));
 }
 
-.scroll-media-text__triggers {
-  position: absolute;
-  top: 100svh;
-  left: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  pointer-events: none;
-}
 
-.scroll-media-text__trigger {
-  flex-grow: 1;
-}
 
-.scroll-media-text__inner {
-  position: sticky;
-  top: var(--padding-top);
+.media-text__inner {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   align-items: center;
   gap: 0 1rem;
-  min-height: calc(100svh - var(--padding) * 2);
 }
 
-.scroll-media-text__medias {
+.media-text__medias {
   position: relative;
   grid-column: span 6;
 }
 
-.scroll-media-text__media {
+.media-text__media {
   position: absolute;
   top: 0;
   left: 0;
@@ -514,34 +524,34 @@ hr.vertical {
   z-index: var(--index);
 }
 
-.scroll-media-text__media:nth-child(1) {
+.media-text__media:nth-child(1) {
   position: relative;
 }
 
-.scroll-media-text__media p {
+.media-text__media p {
   display: flex;
   justify-content: space-between;
   margin-top: 0.6em;
 }
 
-.scroll-media-text__media img,
-.scroll-media-text__media video {
+.media-text__media img,
+.media-text__media video {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.scroll-media-text__text {
+.media-text__text {
   grid-column: span 5 / -1;
 }
 
 
-.scroll-media-text__text .medium-body {
+.media-text__text .medium-body {
   margin-top: 1.33em;
 }
 
-.scroll-media-text__text .button {
+.media-text__text .button {
   margin-top: 1.77em;
 }
 
@@ -713,7 +723,7 @@ hr.vertical {
   grid-column: span 5;
 }
 
-.events hr.horizontal + hr.horizontal {
+.events hr.horizontal+hr.horizontal {
   grid-column: span 7;
 }
 
@@ -795,28 +805,7 @@ hr.vertical {
   margin-top: 1.16em;
 }
 
-.event__media-trail {
-  pointer-events: none; 
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
 
-.event__media-trail img,
-.event__media-trail video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  will-change: transform;
-  transform: scale(0);
-  
-  display: block;
-  width: auto;
-  height: max(100px, 9.7vw);
-}
 
 /* ======================== */
 /* Three columns */
@@ -828,6 +817,7 @@ hr.vertical {
   grid-template-columns: repeat(12, 1fr);
   gap: 0 1rem;
   padding: var(--padding);
+
   @supports (grid-template-rows: subgrid) {
     grid-template-rows: 3px auto auto auto;
   }
@@ -837,6 +827,7 @@ hr.vertical {
   grid-column: span 4;
   max-width: 90%;
   justify-items: start;
+
   @supports (grid-template-rows: subgrid) {
     display: grid;
     grid-gap: 0;
@@ -867,6 +858,54 @@ hr.vertical {
 
 .three-columns__column .button {
   margin-top: 1.77em;
+}
+
+/* ======================== */
+/* CTA */
+/* ======================== */
+
+.cta {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1rem;
+  padding: calc(var(--padding) * 2) var(--padding);
+}
+
+.cta__text {
+  grid-column: span 4;
+}
+
+.cta__text .large-heading {
+  color: var(--accent);
+  text-wrap: balance;
+}
+
+.cta__text .button {
+  margin-top: 1.77em;
+}
+
+.cta__media-trail {
+  grid-column: span 7;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cta__media-trail img,
+.cta__media-trail video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  will-change: transform;
+  transform: scale(0);
+
+  display: block;
+  width: auto;
+  height: max(100px, 9.7vw);
 }
 
 
@@ -966,32 +1005,6 @@ hr.vertical {
 .footer__list svg {
   height: max(20px, 2vw);
   width: auto;
-}
-
-
-
-/* ======================== */
-/* Trail clip animation */
-/* ======================== */
-.trail-clip {
-  position: relative;
-}
-
-.trail-clip h2,
-.trail-clip p {
-  position: relative;
-  z-index: 2;
-}
-
-.trail-clip__video,
-.trail-clip__canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 /* ======================== */

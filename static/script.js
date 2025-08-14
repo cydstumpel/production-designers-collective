@@ -524,35 +524,6 @@ const initHeaderCanvas = () => {
 };
 
 
-const initBlockCanvas = () => {
-	// Get canvas elements after DOM is loaded
-	const canvasEls = document.querySelectorAll('.trail-clip__canvas');
-	const canvasContainer = document.querySelector('.trail-clip');
-	canvasEls.forEach(canvasEl => {
-		let canvas = new Canvas({
-			el: canvasEl,
-			container: canvasContainer,
-			assetSrc: src,
-			videoLoop: true,
-			color: '#fffbf5',
-			restore,
-			restoreTime,
-			radius,
-			blur,
-			enabled
-		});
-		let rafId;
-		(function raf() {
-			canvas.draw();
-			rafId = requestAnimationFrame(raf);
-		})();
-		return () => {
-			cancelAnimationFrame(rafId);
-			canvas.destroy();
-		};
-	})
-};
-
 // ========================
 // Scroll Trigger Stagger Text
 // ========================
@@ -562,7 +533,7 @@ const initStaggerText = () => {
 	if (!staggerTexts) return;
 	staggerTexts.forEach(text => {
 		const from = text.dataset.from || 'top';
-
+		const start = text.dataset.start || 'top 90%';
 
 		SplitText.create(text, {
 			type: 'lines, chars',
@@ -572,7 +543,7 @@ const initStaggerText = () => {
 				gsap.from(self.chars, {
 					scrollTrigger: {
 						trigger: text,
-						start: 'top 90%',
+						start: start,
 						end: 'bottom 50%',
 					},
 					y: from === 'top' ? '-250%' : '250%',
@@ -605,7 +576,7 @@ const initHrs = () => {
 				start: 'top 90%',
 				end: 'bottom 50%',
 			},
-			clipPath: 'inset(0 0 0% 0)',
+			sPath: 'inset(0 0 0% 0)',
 			duration: 1,
 			ease: 'power4.out',
 		})
@@ -631,16 +602,8 @@ const initHrs = () => {
 const initBigNumbers = () => {
 	const bigNumbers = document.querySelectorAll('.two-column-text__number')
 	if (!bigNumbers) return;
-	const container = document.querySelector('.two-column-text')
-	const tl = gsap.timeline({
-		scrollTrigger: {
-			trigger: container,
-			start: 'top 10%',
-			end: 'bottom bottom',
-			scrub: true,
-		}
-	})
 	bigNumbers.forEach((number, index) => {
+		const trigger = document.querySelector(`.two-column-text__trigger:nth-child(${index + 1})`)
 		const numberHeading = number.querySelector('h3')
 		const numberText = number.querySelector('p')
 		new SplitText(numberHeading, {
@@ -649,82 +612,87 @@ const initBigNumbers = () => {
 			charsClass: 'char',
 			autoSplit: true,
 			onSplit: (self) => {
-				tl.set(self.chars, {
-					y: '100%',
+				if (index !== 0) {
+					gsap.timeline({
+						scrollTrigger: {
+							trigger: trigger,
+							start: 'top top',
+							end: 'top top',
+							toggleActions: 'play none play reverse',
+							scrub: false,
+							fastScrollEnd: true,
+						}
+					})
+					.to(self.chars, {
+						stagger: {
+								amount: 0.1
+							},
+							y: '0%',
+							ease: 'power4.out',
+						})
+						.to(numberText, {
+							opacity: 1,
+						}, 0)
+				}
+				gsap.timeline({
+					scrollTrigger: {
+						trigger: trigger,
+						start: 'bottom top',
+						toggleActions: 'play none play reverse',
+						scrub: false,
+						fastScrollEnd: true,
+					}
 				})
-				tl.to(self.chars, {
-					stagger: 0.05,
-					y: '0%',
-					ease: 'power4.out',
-				}, index * 1)
-				tl.to(numberText, {
-					opacity: 1,
-					ease: 'power4.out',
-				}, index * 1)
-				tl.to(self.chars, {
-					stagger: 0.05,
-					y: '-100%',
-					ease: 'power4.out',
-				}, index * 1 + 0.7)
-				tl.to(numberText, {
-					opacity: 0,
-					ease: 'power4.out',
-				}, index * 1 + 0.7)
+				.to(self.chars, {
+						stagger: {
+							amount: 0.1
+						},
+						y: '-100%',
+						ease: 'power4.out',
+					})
+					.to(numberText, {
+						opacity: 0,
+					}, 0)
 			}
 		})
 	})
 }
 
-const initClip = () => {
-	const clippedContainer = document.querySelector('.two-column-text')
-	if (!clippedContainer) return;
-
-	gsap.to(clippedContainer, {
-		scrollTrigger: {
-			trigger: clippedContainer,
-			start: 'bottom 110%',
-			end: 'bottom 10%',
-			scrub: true,
-		},
-		clipPath: 'inset(0% 0 100% 0)',
-		duration: 1,
-		ease: 'power4.out',
+const initMediaText = () => {
+	const mediaText = document.querySelector('.media-text')
+	if (!mediaText) return;
+	const mediaTexts = mediaText.querySelectorAll('.media-text__media')
+	const tl = gsap.timeline({
+		repeat: -1,
 	})
-}
-
-
-
-const initScrollMediaText = () => {
-	const scrollMediaText = document.querySelector('.scroll-media-text')
-	if (!scrollMediaText) return;
-	const scrollMedias = scrollMediaText.querySelectorAll('.scroll-media-text__media')
-	scrollMedias.forEach((media, index) => {
-		if (index !== scrollMedias.length - 1) {
-			const scrollMediaTrigger = document.querySelector(`.scroll-media-text__trigger:nth-child(${index + 1})`)
-			const tl = gsap.timeline({
-				scrollTrigger: {
-					trigger: scrollMediaTrigger,
-					start: 'top 80%',
-					end: 'bottom bottom',
-					scrub: true,
-				}
-			})
-			tl.to(media, {
-				clipPath: 'inset(0% 0 100% 0)',
-				duration: 1,
-				ease: 'power4.out',
-			})
-		}
+	const totalDuration = 5
+	mediaTexts.forEach((media, index) => {
+		const nextMedia = mediaTexts[index + 1] ? mediaTexts[index + 1] : mediaTexts[0]
+		tl.set(media, {
+			'--index': 10,
+		}, (index + 1) * totalDuration)
+		tl.set(nextMedia, {
+			'--index': 9,
+			clipPath: 'inset(0% 0 0 0)',
+		})
+		tl.to(media, {
+			clipPath: 'inset(0% 0 100% 0)',
+			duration: 1,
+			ease: 'power4.out',
+		})
+		tl.set(media, {
+			'--index': 8,
+		})
 	})
 }
 
 export const initMediaTrail = () => {
-	const mediaTrails = document.querySelectorAll('.events__event')
+	const mediaTrails = document.querySelectorAll('.cta')
 	if (!mediaTrails) return
 	mm.add('(prefers-reduced-motion: no-preference) and (min-width: 1024px)', () => {
 		mediaTrails.forEach(mediaTrail => {
 			new MediaTrail({
-				media: mediaTrail.querySelectorAll('.event__media-trail img, .event__media-trail video'),
+				media: mediaTrail.querySelectorAll('.cta__media-trail img, .cta__media-trail video'),
 				mediaContainer: mediaTrail
 			})
 		})
@@ -753,7 +721,6 @@ class MediaTrail {
 	getMousePos(ev) {
 		let posx = 0
 		let posy = 0
-
 		posx = ev.clientX
 		posy = ev.clientY
 		return { x: posx, y: posy }
@@ -887,13 +854,11 @@ class Media {
 
 document.addEventListener('DOMContentLoaded', (event) => {
 	initHeaderCanvas()
-	initBlockCanvas()
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load
 	initHrs()
 	initBigNumbers()
-	initClip()
-	initScrollMediaText()
+	initMediaText()
 	initMediaTrail()
 	document.fonts.ready.then(function () {
 		initStaggerText()
