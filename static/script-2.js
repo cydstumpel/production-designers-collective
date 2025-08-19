@@ -531,9 +531,10 @@ const initPageHeaderScroll = () => {
 	const tl = gsap.timeline({
 		scrollTrigger: {
 			trigger: pageHeader,
-			start: 'top top',
-			end: 'top -30%',
+			start: window.innerWidth > 750 ? 'top top' : 'top -30%',
+			end: window.innerWidth > 750 ? 'top -30%' : 'top -50%',
 			scrub: true,
+			// toggleActions: 'play none play reverse',
 			onEnter: () => {
 				gsap.set('.overlay', {
 					pointerEvents: 'none',
@@ -555,7 +556,7 @@ const initPageHeaderScroll = () => {
 			opacity: 1,
 			duration: 1,
 			ease: 'power4.out',
-		}, 0)
+		})
 }
 
 // ========================
@@ -713,30 +714,33 @@ const initBigNumbers = () => {
 }
 
 const initMediaText = () => {
-	const mediaText = document.querySelector('.media-text')
+	const mediaText = document.querySelector('.media-text__medias')
 	if (!mediaText) return;
-	const mediaTexts = mediaText.querySelectorAll('.media-text__media')
-	const tl = gsap.timeline({
-		repeat: -1,
+	const duration = mediaText.dataset.duration || 3;
+	gsap.set('.media-text .timeline', {
+		'--duration': duration,
 	})
-	const totalDuration = 5
-	mediaTexts.forEach((media, index) => {
-		const nextMedia = mediaTexts[index + 1] ? mediaTexts[index + 1] : mediaTexts[0]
-		tl.set(media, {
-			'--index': 10,
-		}, (index + 1) * totalDuration)
-		tl.set(nextMedia, {
-			'--index': 9,
-			clipPath: 'inset(0% 0 0 0)',
-		})
-		tl.to(media, {
-			clipPath: 'inset(0% 0 100% 0)',
-			duration: 1,
-			ease: 'power4.out',
-		})
-		tl.set(media, {
-			'--index': 8,
-		})
+	const swiper = new Swiper('.media-text__medias', {
+		slidesPerView: 1,
+		loop: true,
+		effect: 'fade',
+		speed: 500,
+		allowTouchMove: false,
+		autoplay: {
+			delay: duration * 1000,
+			disableOnInteraction: false,
+		},
+		on: {
+			slideChange: () => {
+				gsap.fromTo('.media-text .timeline', {
+					scaleX: 0,
+				}, {
+					scaleX: 1,
+					duration,
+					ease: 'linear',
+				})
+			}
+		}
 	})
 }
 
