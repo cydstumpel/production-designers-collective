@@ -14,7 +14,13 @@ export default {
     {
         outDir: '../dist', // Output in the dist/ folder
         emptyOutDir: true, // Empty the folder first
-        sourcemap: true // Add sourcemap
+        sourcemap: true, // Add sourcemap
+        rollupOptions: {
+            input: {
+                main: 'src/index.html',
+                v2: 'src/v2/index.html'
+            }
+        }
     },
     plugins:
     [
