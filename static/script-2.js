@@ -1,0 +1,922 @@
+// ========================
+// Canvas Background
+// ========================
+
+let src = 'color'  // Special flag for color mode
+let color = '#000000'  // Change this hex color to any color you want
+let loop = true;
+let restore = true;
+let restoreTime = 5;
+let radius = window.innerWidth / 48;
+let blur = 1;
+let enabled = true;
+const mm = gsap.matchMedia()
+
+const distanceBetween = (point1, point2) => {
+	return Math.sqrt(
+		Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
+	);
+};
+
+const angleBetween = (point1, point2) => {
+	return Math.atan2(point2.x - point1.x, point2.y - point1.y);
+};
+
+const easeOutQuart = (x) => {
+	return 1 - Math.pow(1 - x, 4)
+}
+
+class Canvas {
+	constructor(props) {
+		this.canvas = props.el;
+		this.container = props.container;
+		this.frame = 0;
+		this.enabled = props.enabled;
+		this.videoLoop = props.videoLoop;
+
+		this.asset = {
+			src: props.assetSrc,
+			color: props.color || color,
+			file: null
+		};
+
+		this.restoreTime = props.restoreTime * 60 || 0;
+		this.restore = props.restore;
+		this.radius = props.radius || 70;
+		this.blur = props.blur;
+
+		this.mousePos = { x: 0, y: 0 };
+		this.mousePosX = gsap.quickTo(this.mousePos, 'x', { duration: 0.4, ease: 'power4' });
+		this.mousePosY = gsap.quickTo(this.mousePos, 'y', { duration: 0.4, ease: 'power4' });
+		this.imageLoaded = false;
+		this.firstDraw = true;
+
+		gsap.timeline()
+			.to('.page-header video', {
+				opacity: 1,
+				delay: 0.5,
+				duration: 1,
+				ease: 'power1'
+			}, 0.5)
+			.to('canvas', {
+				opacity: 1,
+				duration: 1,
+				ease: 'power1'
+			}, '<')
+		this.init();
+	}
+
+	stop() {
+		this.enabled = false;
+	}
+
+	start() {
+		this.enabled = true;
+	}
+
+	async init() {
+		this.brush = new Brush({
+			restoreTime: this.restoreTime,
+			container: this.container,
+			restore: this.restore,
+			radius: this.radius,
+			blur: this.blur
+		});
+
+		this.ctx = this.canvas.getContext('2d');
+		await this.loadAssets();
+
+		this.maskCanvas = document.createElement('canvas');
+		this.maskCtx = this.maskCanvas.getContext('2d');
+
+		this.initEvents();
+
+		this.imageLoaded = true;
+		if (this.onReady) {
+			this.onReady();
+		}
+	}
+
+	async reset(src, props, cb) {
+		this.asset = {
+			src: src,
+			file: null
+		};
+		this.mousePos = {};
+		this.imageLoaded = false;
+		this.brush.reset(props);
+		await this.loadAssets();
+		this.imageLoaded = true;
+		this.stopped = false;
+		if (cb) cb();
+	}
+
+	destroy() {
+		this.destroyEvents();
+	}
+
+	initEvents() {
+		this.onResizeBound = this.onResize.bind(this);
+		window.addEventListener('resize', this.onResizeBound);
+		this.onResize();
+
+		this.onMouseMoveBound = this.onMouseMove.bind(this);
+		this.onMouseEnterBound = this.onMouseEnter.bind(this);
+		this.onMouseLeaveBound = this.onMouseLeave.bind(this);
+
+		this.container.addEventListener('mousemove', this.onMouseMoveBound);
+		this.container.addEventListener('mouseenter', this.onMouseEnterBound);
+		this.container.addEventListener('mouseleave', this.onMouseLeaveBound);
+	}
+
+	destroyEvents() {
+		window.removeEventListener('resize', this.onResizeBound);
+		this.container.removeEventListener('mousemove', this.onMouseMoveBound);
+		this.container.removeEventListener('mouseenter', this.onMouseEnterBound);
+		this.container.removeEventListener('mouseleave', this.onMouseLeaveBound);
+		window.removeEventListener('scroll', this.onScrollBound);
+	}
+
+	loadAssets() {
+		return new Promise((resolve) => {
+			this.asset.file = 'color'
+			resolve()
+		})
+	}
+
+	draw() {
+		if (!this.imageLoaded) return;
+		this.frame += 1;
+		if (this.firstDraw) {
+			this.firstDraw = false;
+			window.scrollTo(0, 0);
+		}
+		if (this.restore) {
+			this.brush.update();
+		}
+		this.drawMask();
+
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+		this.ctx.save();
+		this.drawImage(this.maskCanvas, this.canvas, this.ctx);
+		this.ctx.restore();
+
+	}
+
+	drawMask() {
+		this.maskCtx.save();
+		this.drawImage(this.asset.file, this.maskCanvas, this.maskCtx);
+		this.maskCtx.globalCompositeOperation = 'destination-out';
+		this.maskCtx.drawImage(
+			this.brush.canvas,
+			0,
+			0,
+			this.maskCanvas.width,
+			this.maskCanvas.height
+		);
+
+		this.maskCtx.restore();
+	}
+
+	drawImage(image, canvas, ctx) {
+		// If image is null (for color mode), fill with color
+		if (!image || image === 'color') {
+			ctx.fillStyle = this.asset.color  // Using the global color variable
+			ctx.fillRect(0, 0, canvas.width, canvas.height)
+			return
+		}
+
+		// Otherwise handle image/video as before
+		const canvasAspectRatio = canvas.width / canvas.height
+		let imageWidth, imageHeight
+		imageWidth = image.width
+		imageHeight = image.height
+
+		const imageAspectRatio = imageWidth / imageHeight
+		let drawWidth, drawHeight, sourceX, sourceY, sourceWidth, sourceHeight
+
+		if (imageAspectRatio > canvasAspectRatio) {
+			drawHeight = canvas.height
+			drawWidth = drawHeight * imageAspectRatio
+			sourceX = (imageWidth - imageHeight * canvasAspectRatio) / 2
+			sourceY = 0
+			sourceWidth = imageHeight * canvasAspectRatio
+			sourceHeight = imageHeight
+		} else {
+			drawWidth = canvas.width
+			drawHeight = drawWidth / imageAspectRatio
+			sourceX = 0
+			sourceY = (imageHeight - imageWidth / canvasAspectRatio) / 2
+			sourceWidth = imageWidth
+			sourceHeight = imageWidth / canvasAspectRatio
+		}
+
+		ctx.drawImage(
+			image,
+			sourceX, sourceY, sourceWidth, sourceHeight,
+			0, 0, canvas.width, canvas.height
+		);
+	}
+
+	onMouseEnter(e) {
+		// Reset the last point when mouse enters to start fresh
+		if (this.brush) {
+			this.brush.lastPoint = undefined;
+		}
+		this.onMouseMove(e); // Handle the initial position
+	}
+
+	onMouseLeave() {
+		// Reset the last point when mouse leaves
+		if (this.brush) {
+			this.brush.lastPoint = undefined;
+		}
+	}
+
+	onMouseMove(e) {
+		let x = e.clientX || e.pageX;
+		let y = e.clientY || e.pageY;
+
+		// Get the canvas rect and calculate the scale
+		const rect = this.canvas.getBoundingClientRect();
+		const scaleX = this.canvas.width / rect.width;
+		const scaleY = this.canvas.height / rect.height;
+
+		// Adjust coordinates for canvas position and scale
+		x = (x - rect.left) * scaleX;
+		y = (y - rect.top) * scaleY;
+
+		this.mousePosX(x);
+		this.mousePosY(y);
+
+		if (this.enabled && this.mousePos.x) {
+			this.brush.addTouch({ ...this.mousePos });
+		}
+	}
+
+	onResize() {
+		radius = window.innerWidth / 24;
+
+		this.width = this.container.offsetWidth;
+		this.height = this.container.offsetHeight;
+
+		this.canvas.width = this.width;
+		this.canvas.height = this.height;
+		this.canvasAspectRatio = this.canvas.width / this.canvas.height;
+
+		this.maskCanvas.width = this.width;
+		this.maskCanvas.height = this.height;
+		this.canvasRect = this.canvas.getBoundingClientRect();
+
+		this.brush.resize(this.width, (this.height / this.width) * this.width);
+	}
+}
+
+class Brush {
+	constructor(props) {
+		this.container = props.container;
+		this.width = 256;
+		this.height = 256;
+		this.maxAge = props.restoreTime;
+		this.restore = props.restore;
+		this.radius = props.radius;
+		this.blur = props.blur;
+		this.lastPoint;
+		this.currentPoint;
+		this.oldContainerRect;
+
+		this.trail = [];
+
+		this.initTexture();
+	}
+
+	initTexture() {
+		this.canvas = document.createElement('canvas');
+		this.canvas.width = this.canvas.height = this.width;
+		this.ctx = this.canvas.getContext('2d');
+
+		this.canvas.id = 'gradientTexture';
+	}
+
+	reset(props) {
+		if (props) {
+			this.blur = props.blur !== undefined ? props.blur : this.blur;
+		}
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		this.trail = [];
+		this.lastPoint = undefined;
+		console.log('reset', props);
+	}
+
+	update() {
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+		if (this.restore) {
+			// age points
+			this.trail.forEach((point, i) => {
+				point.age += 1;
+				// remove old
+				if (point.age > this.maxAge) {
+					this.trail.splice(i, 1);
+				}
+			});
+			this.trail.forEach((point, i) => {
+				let last = false;
+				if (i > 0) {
+					last = this.trail[i - 1];
+				}
+				this.drawTouch(point, last);
+			});
+		}
+	}
+
+	updateContainerRect() {
+		this.containerRect = this.container.getBoundingClientRect();
+		this.oldContainerRect = this.containerRect;
+	}
+
+	addTouch(point) {
+		if (this.oldContainerRect != this.containerRect) {
+			this.updateContainerRect();
+		}
+
+		// Use point coordinates directly without container offset
+		let newPoint = {
+			x: point.x,
+			y: point.y,
+			age: 0
+		};
+
+		if (this.restore) {
+			this.trail.push(newPoint);
+		} else {
+			this.currentPoint = newPoint;
+			// Draw only at the current point, no interpolation
+			this.drawTouch(newPoint, null);
+		}
+	}
+
+	resize(width, height) {
+		this.width = width;
+		this.height = height;
+		this.canvas.width = this.width;
+		this.canvas.height = this.height;
+		this.containerRect = this.container.getBoundingClientRect();
+	}
+
+	drawTouch(point, lastPoint) {
+		let radius = this.radius;
+		let blur = (1 - this.blur) * radius;
+		let grd;
+
+		// Add spread factor based on age
+		const spreadFactor = point.age ? Math.min(1.5, 1 + (point.age / this.maxAge) * 0.5) : 1;
+		const currentRadius = radius * spreadFactor;
+		const currentBlur = blur * spreadFactor;
+
+		const glowRadius = currentRadius;
+		const glowBlur = glowRadius * 4;
+
+		const drawGlow = (pt, intensity = 1) => {
+			this.drawGlowAt(pt, glowBlur, glowRadius, intensity);
+		};
+
+		// Draw interpolated points if we have a last point and it's not a new stroke
+		if (lastPoint && lastPoint !== null) {
+			const dist = distanceBetween(lastPoint, point);
+
+			// Calculate step size based on distance and speed
+			// Keep minimum density even at high speeds
+			const maxStep = 4; // Maximum step size to ensure minimum density
+			const step = Math.min(maxStep, Math.max(2, Math.floor(dist / 40)));
+			if (dist > 0) {
+				const angle = angleBetween(lastPoint, point);
+				const sin = Math.sin(angle);
+				const cos = Math.cos(angle);
+
+				// Pre-calculate common values
+				const baseIntensity = 0.7;
+				const intensityRange = 0.3;
+				const variationRange = 2;
+
+				for (let i = 0; i < dist; i += step) {
+					const x = lastPoint.x + sin * i;
+					const y = lastPoint.y + cos * i;
+
+					// Faster random variation using a single random call
+					const rand = Math.random();
+					const pt = {
+						x: x + (rand - 0.5) * variationRange,
+						y: y + (Math.random() - 0.5) * variationRange
+					};
+
+					const intensity = baseIntensity + rand * intensityRange;
+					drawGlow(pt, intensity);
+
+					// Reuse gradient for consecutive points to improve performance
+					if (i % (step * 2) === 0) {
+						grd = this.createGradient(pt, currentBlur, currentRadius, point.age);
+					}
+					this.drawAt(pt, currentBlur, currentRadius, grd, point.age);
+				}
+			}
+		}
+
+		// Always draw the current point
+		drawGlow(point);
+		grd = this.createGradient(point, currentBlur, currentRadius, point.age);
+		this.drawAt(point, currentBlur, currentRadius, grd, point.age);
+	}
+
+	// Draw a white inner glow at the eraser edge
+	drawGlowAt(point, blur, radius, intensity = 1) {
+		this.ctx.save();
+		this.ctx.globalCompositeOperation = 'lighter';
+		let glow = this.ctx.createRadialGradient(
+			point.x,
+			point.y,
+			blur * 0.5, // Smaller inner radius for more concentrated glow
+			point.x,
+			point.y,
+			radius
+		);
+		// Adjust glow opacity based on intensity
+		const innerOpacity = 0.7 * intensity;
+		const midOpacity = 0.3 * intensity;
+		glow.addColorStop(0, `rgba(255,255,255,${innerOpacity})`);
+		glow.addColorStop(0.5, `rgba(255,255,255,${midOpacity})`);
+		glow.addColorStop(1, 'rgba(255,255,255,0)');
+		this.ctx.beginPath();
+		this.ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+		this.ctx.fillStyle = glow;
+		this.ctx.fill();
+		this.ctx.restore();
+	}
+
+	createGradient(point, blur, radius, age = 0) {
+		// Calculate opacity based on age with a more organic fade
+		const maxAge = this.maxAge;
+		const progress = Math.min(1, age / maxAge);
+		const opacity = 1 - easeOutQuart(progress);
+
+		// Add slight randomness to the blur radius for more natural look
+		const randomBlur = blur * (0.8 + Math.random() * 0.4);
+
+		let grd = this.ctx.createRadialGradient(
+			point.x,
+			point.y,
+			randomBlur,
+			point.x,
+			point.y,
+			radius
+		);
+
+		// Create multiple color stops for a more watercolor-like effect
+		grd.addColorStop(0, `rgba(255, 255, 255, ${opacity * 0.9})`);
+		grd.addColorStop(0.3, `rgba(255, 255, 255, ${opacity * 0.7})`);
+		grd.addColorStop(0.6, `rgba(255, 255, 255, ${opacity * 0.4})`);
+		grd.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+		return grd;
+	}
+
+	drawAt(point, blur, radius, grd, age = 0) {
+		this.ctx.beginPath()
+		if (blur === radius) {
+			// Calculate opacity based on age for solid fill with easeOutQuart
+			const maxAge = this.maxAge
+			const progress = Math.min(1, age / maxAge)
+			const opacity = 1 - easeOutQuart(progress)
+			this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`
+		} else {
+			this.ctx.fillStyle = grd
+		}
+		this.ctx.arc(point.x, point.y, radius, 0, Math.PI * 2)
+		this.ctx.fill()
+	}
+}
+
+const initHeaderCanvas = () => {
+	// Get canvas elements after DOM is loaded
+	const canvasEl = document.getElementById('canvas');
+	const canvasContainer = document.querySelector('.page-header');
+
+	let canvas = new Canvas({
+		el: canvasEl,
+		container: canvasContainer,
+		assetSrc: src,
+		videoLoop: true,
+		restore,
+		restoreTime,
+		radius,
+		blur,
+		enabled
+	});
+	let rafId;
+	(function raf() {
+		canvas.draw();
+		rafId = requestAnimationFrame(raf);
+	})();
+	return () => {
+		cancelAnimationFrame(rafId);
+		canvas.destroy();
+	};
+};
+
+
+const initPageHeaderScroll = () => {
+	const pageHeader = document.querySelector('.page-header')
+	if (!pageHeader) return
+
+	const tl = gsap.timeline({
+		scrollTrigger: {
+			trigger: pageHeader,
+			start: 'top top',
+			end: 'top -30%',
+			scrub: true,
+			onEnter: () => {
+				gsap.set('.overlay', {
+					pointerEvents: 'none',
+				})
+			},
+			onLeave: () => {
+				gsap.set('.overlay', {
+					pointerEvents: 'auto',
+				})
+			},
+			onEnterBack: () => {
+				gsap.set('.overlay', {
+					pointerEvents: 'none',
+				})
+			},
+		}
+	})
+		.to('.overlay', {
+			opacity: 1,
+			duration: 1,
+			ease: 'power4.out',
+		}, 0)
+}
+
+// ========================
+// Scroll Trigger Stagger Text
+// ========================
+
+const initStaggerText = () => {
+	const staggerTexts = document.querySelectorAll('.st-stagger-text')
+	if (!staggerTexts) return;
+	staggerTexts.forEach(text => {
+		const from = text.dataset.from || 'top';
+		const start = text.dataset.start || 'top 90%';
+
+		SplitText.create(text, {
+			type: 'lines, chars',
+			linesClass: 'line',
+			autoSplit: true,
+			onSplit: (self) => {
+				let target = text.dataset.target || text
+				if (target === 'parent') {
+					target = text.closest('section')
+				}
+				gsap.from(self.chars, {
+					scrollTrigger: {
+						trigger: target,
+						start: start,
+						end: 'bottom 50%',
+					},
+					y: from === 'top' ? '-250%' : '250%',
+					opacity: 0,
+					skewY: -5,
+					duration: 1,
+					stagger: {
+						amount: 0.5,
+					},
+					ease: 'power4.out',
+				})
+			}
+		});
+	})
+}
+
+// ========================
+// Scroll Trigger Hrs
+// ========================
+
+const initHrs = () => {
+	const verticalHrs = document.querySelectorAll('hr.vertical')
+	const horizontalHrs = document.querySelectorAll('hr.horizontal')
+	if (!verticalHrs && !horizontalHrs) return;
+
+	verticalHrs.forEach(hr => {
+		const start = hr.dataset.start || 'top 90%'
+		let target = hr.dataset.target || hr
+		const delay = hr.dataset.delay || 0
+		if (target === 'parent') {
+			target = hr.closest('section')
+		}
+		gsap.to(hr, {
+			scrollTrigger: {
+				trigger: target,
+				start: start,
+				end: 'bottom 50%',
+			},
+			delay: delay,
+			sPath: 'inset(0 0 0% 0)',
+			duration: 1,
+			ease: 'power4.out',
+		})
+	})
+	horizontalHrs.forEach(hr => {
+		const start = hr.dataset.start || 'top 90%'
+		let target = hr.dataset.target || hr
+		const delay = hr.dataset.delay || 0
+		if (target === 'parent') {
+			target = hr.closest('section')
+		}
+		gsap.to(hr, {
+			scrollTrigger: {
+				trigger: target,
+				start: start,
+				end: 'bottom 50%',
+			},
+			delay: delay,
+			clipPath: 'inset(0 0% 0 0)',
+			duration: 1,
+			ease: 'power4.out',
+		})
+	})
+}
+
+// ========================
+// Big Numbers Stagger Text
+// ========================
+
+const initBigNumbers = () => {
+	const bigNumbers = document.querySelectorAll('.two-column-text__number')
+	if (!bigNumbers) return;
+	bigNumbers.forEach((number, index) => {
+		const trigger = document.querySelector(`.two-column-text__trigger:nth-child(${index + 1})`)
+		const numberHeading = number.querySelector('h3')
+		const numberText = number.querySelector('p')
+		new SplitText(numberHeading, {
+			type: 'chars, lines',
+			linesClass: 'line',
+			charsClass: 'char',
+			autoSplit: true,
+			onSplit: (self) => {
+				if (index !== 0) {
+					gsap.timeline({
+						scrollTrigger: {
+							trigger: trigger,
+							start: 'top top',
+							end: 'top top',
+							toggleActions: 'play none play reverse',
+							scrub: false,
+							// fastScrollEnd: true,
+						}
+					})
+						.to(self.chars, {
+							stagger: {
+								amount: 0.1
+							},
+							y: '0%',
+							ease: 'power4.out',
+						})
+						.to(numberText, {
+							opacity: 1,
+						}, 0)
+				}
+				if (index != bigNumbers.length - 1) {
+					gsap.timeline({
+						scrollTrigger: {
+							trigger: trigger,
+							start: 'bottom top',
+							toggleActions: 'play none play reverse',
+							scrub: false,
+							// fastScrollEnd: true,
+						}
+					})
+						.to(self.chars, {
+							stagger: {
+								amount: 0.1
+							},
+							y: '-100%',
+							ease: 'power4.out',
+						})
+						.to(numberText, {
+							opacity: 0,
+						}, 0)
+				}
+			}
+		})
+	})
+}
+
+const initMediaText = () => {
+	const mediaText = document.querySelector('.media-text')
+	if (!mediaText) return;
+	const mediaTexts = mediaText.querySelectorAll('.media-text__media')
+	const tl = gsap.timeline({
+		repeat: -1,
+	})
+	const totalDuration = 5
+	mediaTexts.forEach((media, index) => {
+		const nextMedia = mediaTexts[index + 1] ? mediaTexts[index + 1] : mediaTexts[0]
+		tl.set(media, {
+			'--index': 10,
+		}, (index + 1) * totalDuration)
+		tl.set(nextMedia, {
+			'--index': 9,
+			clipPath: 'inset(0% 0 0 0)',
+		})
+		tl.to(media, {
+			clipPath: 'inset(0% 0 100% 0)',
+			duration: 1,
+			ease: 'power4.out',
+		})
+		tl.set(media, {
+			'--index': 8,
+		})
+	})
+}
+
+export const initMediaTrail = () => {
+	const mediaTrails = document.querySelectorAll('.cta')
+	if (!mediaTrails) return
+	mm.add('(prefers-reduced-motion: no-preference) and (min-width: 1024px)', () => {
+		mediaTrails.forEach(mediaTrail => {
+			new MediaTrail({
+				media: mediaTrail.querySelectorAll('.cta__media-trail img, .cta__media-trail video'),
+				mediaContainer: mediaTrail
+			})
+		})
+	})
+}
+
+class MediaTrail {
+	constructor(options) {
+		this.media = options.media
+		if (!this.media) return
+		this.mediaContainer = options.mediaContainer
+		this.hoverContainer = options.hoverContainer || document.body
+		this.mathUtils = {
+			// linear interpolation
+			lerp: (a, b, n) => (1 - n) * a + n * b,
+			// distance between two points
+			distance: (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1)
+		}
+		this.mousePos = this.lastMousePos = this.cacheMousePos = { x: 0, y: 0 }
+		this.mouseEvents()
+		this.init()
+	}
+	mouseEvents() {
+		this.mediaContainer.addEventListener('mousemove', ev => this.mousePos = this.getMousePos(ev))
+	}
+	getMousePos(ev) {
+		let posx = 0
+		let posy = 0
+		posx = ev.clientX
+		posy = ev.clientY
+		return { x: posx, y: posy }
+	}
+	getMouseDistance() {
+		// gets the distance from the current mouse position to the last recorded mouse position
+		return this.mathUtils.distance(this.mousePos.x, this.mousePos.y, this.lastMousePos.x, this.lastMousePos.y)
+	}
+	init() {
+		// images container
+		this.DOM = { content: this.mediaContainer }
+		// array of Image objs, one per image element
+		this.mediaItems = []
+		this.media.forEach(media => this.mediaItems.push(new Media(media)))
+		// total number of images
+		this.mediaTotal = this.mediaItems.length
+		// upcoming image index
+		this.mediaPosition = 0
+		// zIndex value to apply to the upcoming image
+		this.zIndexVal = 1
+		// mouse distance required to show the next image
+		this.threshold = window.innerWidth / 24 * 4
+		// render the images
+		requestAnimationFrame(() => this.render())
+	}
+	render() {
+		// get distance between the current mouse position and the position of the previous image
+		let distance = this.getMouseDistance()
+		// cache previous mouse position
+		this.cacheMousePos.x = this.mathUtils.lerp(this.cacheMousePos.x || this.mousePos.x, this.mousePos.x, 0.1)
+		this.cacheMousePos.y = this.mathUtils.lerp(this.cacheMousePos.y || this.mousePos.y, this.mousePos.y, 0.1)
+
+		// if the mouse moved more than [this.threshold] then show the next image
+		if (distance > this.threshold) {
+			this.showNextImage()
+
+			++this.zIndexVal
+			this.mediaPosition = this.mediaPosition < this.mediaTotal - 1 ? this.mediaPosition + 1 : 0
+
+			this.lastMousePos = this.mousePos
+		}
+
+		// check when mousemove stops and all images are inactive (not visible and not animating)
+		let isIdle = true
+		for (let media of this.media) {
+			if (gsap.isTweening(media) || media.style.opacity != 0) {
+				isIdle = false
+				break
+			}
+		}
+		// reset z-index initial value
+		if (isIdle && this.zIndexVal !== 1) {
+			this.zIndexVal = 1
+		}
+
+		// loop..
+		requestAnimationFrame(() => this.render())
+	}
+	showNextImage() {
+		// show image at position [this.mediaPosition]
+		const mediaItem = this.mediaItems[this.mediaPosition]
+		// kill any tween on the image
+		gsap.killTweensOf(mediaItem.DOM.el)
+
+		gsap.timeline()
+			.set(mediaItem.DOM.el, {
+				startAt: { opacity: 0 },
+				autoAlpha: 1,
+				zIndex: this.zIndexVal,
+				x: this.cacheMousePos.x - mediaItem.rect.width / 2,
+				y: this.cacheMousePos.y - mediaItem.rect.height / 2,
+				ease: 'expo.easeOut',
+				duration: 0.3
+			})
+			// animate position
+			.to(mediaItem.DOM.el, {
+				ease: 'expo.easeOut',
+				scale: 1,
+				x: this.mousePos.x - mediaItem.rect.width / 2,
+				y: this.mousePos.y - mediaItem.rect.height / 2
+			})
+			// then make it disappear
+			.to(mediaItem.DOM.el, {
+				ease: 'power1.easeOut',
+				scale: 0,
+				// y: '+='+window.innerHeight,
+				duration: 0.5
+			}, 1)
+			.to(mediaItem.DOM.el, {
+				autoAlpha: 0,
+				duration: 0.1
+			}, 1)
+		// scale down the image
+	}
+}
+
+class Media {
+	constructor(el) {
+		this.DOM = { el: el }
+		// image deafult styles
+		this.defaultStyle = {
+			scale: 1,
+			x: 0,
+			y: 0,
+			opacity: 0
+		}
+		// get sizes/position
+		this.getRect()
+		// init/bind events
+		this.initEvents()
+	}
+	initEvents() {
+		// on resize get updated sizes/position
+		window.addEventListener('resize', () => this.resize())
+	}
+	resize() {
+		// reset styles
+		gsap.set(this.DOM.el, this.defaultStyle)
+		// get sizes/position
+		this.getRect()
+	}
+	getRect() {
+		this.rect = this.DOM.el.getBoundingClientRect()
+	}
+	isActive() {
+		// check if image is animating or if it's visible
+		return gsap.isTweening(this.DOM.el) || this.DOM.el.style.opacity != 0
+	}
+}
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+	initHeaderCanvas()
+	gsap.registerPlugin(SplitText, ScrollTrigger)
+	// wait for akzidenz font to load
+	initHrs()
+	initBigNumbers()
+	initMediaText()
+	initMediaTrail()
+	initPageHeaderScroll()
+	document.fonts.ready.then(function () {
+		initStaggerText()
+	})
+	// gsap code here!
+});

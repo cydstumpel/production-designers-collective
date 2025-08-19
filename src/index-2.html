@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Production Designers Collective</title>
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style-2.css">
 </head>
 
 <body>
@@ -109,21 +109,21 @@
 
   <div class="overlay">
     <section class="two-column-text" style="--count: 3;">
-      <div class="two-column-text__triggers">
-        <div class="two-column-text__trigger"></div>
-        <div class="two-column-text__trigger"></div>
-        <div class="two-column-text__trigger"></div>
-      </div>
       <div class="two-column-text__inner">
         <div class="two-column-text__text">
-          <hr class="horizontal">
-          <hr class="horizontal">
+          <div class="two-column-text__triggers">
+            <div class="two-column-text__trigger"></div>
+            <div class="two-column-text__trigger"></div>
+            <div class="two-column-text__trigger"></div>
+          </div>
+          <hr class="horizontal" data-start="top top" data-target="parent">
+          <hr class="horizontal" data-start="top top" data-target="parent">
           <div class="two-column-text__left">
-            <h2 class="two-column-text__title large-heading st-stagger-text">
+            <h2 class="two-column-text__title large-heading st-stagger-text" data-start="top top" data-target="parent">
               The PDC is the largest organization of production designers in the world
             </h2>
-            <div class="two-column-text__body p medium-body st-stagger-text">
-              <p>
+            <div class="two-column-text__body p medium-body p">
+              <p class="st-stagger-text" data-start="top top" data-target="parent">
                 The Collective is dedicated to mutual support, advocacy and mentorship through sharing knowledge,
                 encouragement and experience.
               </p>
@@ -197,7 +197,6 @@
         </section>
       </div>
     </section>
-
 
     <section class="events">
       <hr class="horizontal">
@@ -558,7 +557,7 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 
-  <script type="module" src="/script.js"></script>
+  <script type="module" src="/script-2.js"></script>
 </body>
 
 </html>
