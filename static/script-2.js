@@ -1,7 +1,7 @@
 // ========================
 // Canvas Background
 // ========================
-
+let canvasVisible = true;
 let src = 'color'  // Special flag for color mode
 let color = '#000000'  // Change this hex color to any color you want
 let loop = true;
@@ -82,7 +82,7 @@ class Canvas {
 			radius: this.radius,
 			blur: this.blur
 		});
-
+		console.log('init');
 		this.ctx = this.canvas.getContext('2d');
 		await this.loadAssets();
 
@@ -145,6 +145,7 @@ class Canvas {
 	}
 
 	draw() {
+		console.log('draw');
 		if (!this.imageLoaded) return;
 		this.frame += 1;
 		if (this.firstDraw) {
@@ -311,7 +312,6 @@ class Brush {
 
 	update() {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
 		if (this.restore) {
 			// age points
 			this.trail.forEach((point, i) => {
@@ -514,7 +514,9 @@ const initHeaderCanvas = () => {
 	});
 	let rafId;
 	(function raf() {
-		canvas.draw();
+		if (canvasVisible) {
+			canvas.draw();
+		}
 		rafId = requestAnimationFrame(raf);
 	})();
 	return () => {
@@ -539,16 +541,28 @@ const initPageHeaderScroll = () => {
 				gsap.set('.overlay', {
 					pointerEvents: 'none',
 				})
+				gsap.set('canvas', {
+					autoAlpha: 1
+				})
+				canvasVisible = true;
 			},
 			onLeave: () => {
 				gsap.set('.overlay', {
 					pointerEvents: 'auto',
 				})
+				gsap.set('canvas', {
+					autoAlpha: 0,
+				})
+				canvasVisible = false;
 			},
 			onEnterBack: () => {
 				gsap.set('.overlay', {
 					pointerEvents: 'none',
 				})
+				gsap.set('canvas', {
+					autoAlpha: 1
+				})
+				canvasVisible = true;
 			},
 		}
 	})
@@ -911,11 +925,6 @@ class Media {
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
-	// Initialize Lenis
-	const lenis = new Lenis({
-		autoRaf: true,
-	});
-
 	initHeaderCanvas()
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load

@@ -22,6 +22,7 @@
 
 body {
   background: var(--background);
+  color: var(--text);
 }
 
 ::selection {
@@ -125,6 +126,10 @@ a {
   line-height: 1.15;
   font-weight: 500;
   letter-spacing: -0.01em;
+}
+
+hr {
+  color: inherit;
 }
 
 hr.horizontal {
