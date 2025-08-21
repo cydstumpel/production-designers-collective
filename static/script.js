@@ -623,8 +623,8 @@ const initBigNumbers = () => {
 							fastScrollEnd: true,
 						}
 					})
-					.to(self.chars, {
-						stagger: {
+						.to(self.chars, {
+							stagger: {
 								amount: 0.1
 							},
 							y: '0%',
@@ -643,7 +643,7 @@ const initBigNumbers = () => {
 						fastScrollEnd: true,
 					}
 				})
-				.to(self.chars, {
+					.to(self.chars, {
 						stagger: {
 							amount: 0.1
 						},
@@ -853,6 +853,11 @@ class Media {
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
+	// Initialize Lenis
+	const lenis = new Lenis({
+		autoRaf: true,
+	});
+
 	initHeaderCanvas()
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load

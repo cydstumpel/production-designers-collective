@@ -911,6 +911,11 @@ class Media {
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
+	// Initialize Lenis
+	const lenis = new Lenis({
+		autoRaf: true,
+	});
+
 	initHeaderCanvas()
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load
