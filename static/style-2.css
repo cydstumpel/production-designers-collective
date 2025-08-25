@@ -632,7 +632,6 @@ hr.vertical {
   height: 4px;
   overflow: hidden;
   margin-top: calc(100% / 16 * 9);
-  background: var(--text);
   transform-origin: left;
   clip-path: inset(0 100% 0 0);
 }
