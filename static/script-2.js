@@ -514,6 +514,24 @@ const watchPageHeaderVisibility = () => {
 	observer.observe(document.querySelector('.page-header'))
 }
 
+const initPlusMask = () => {
+	const plusMask = document.querySelector('.two-column-text__number .video-mask video')
+	if (!plusMask) return
+	gsap.to(plusMask, {
+		scrollTrigger: {
+			trigger: plusMask,
+			start: 'top 60%',
+			end: 'top 40%',
+			scrub: window.innerWidth > 1024 ? true : false,
+			toggleActions: 'play none play reverse',
+		},
+		clipPath: 'inset(0% 0 0 0)',
+		duration: 1,
+		ease: 'power4.inOut',
+	})
+}
+
+
 const initHeaderCanvas = () => {
 	// Get canvas elements after DOM is loaded
 	const canvasEl = document.getElementById('canvas');
@@ -632,71 +650,6 @@ const initHrs = () => {
 	})
 }
 
-// ========================
-// Big Numbers Stagger Text
-// ========================
-
-// const initBigNumbers = () => {
-// 	const bigNumbers = document.querySelectorAll('.two-column-text__number')
-// 	if (!bigNumbers) return;
-// 	bigNumbers.forEach((number, index) => {
-// 		const trigger = document.querySelector(`.two-column-text__trigger:nth-child(${index + 1})`)
-// 		const numberHeading = number.querySelector('h3')
-// 		const numberText = number.querySelector('p')
-// 		new SplitText(numberHeading, {
-// 			type: 'chars, lines',
-// 			linesClass: 'line',
-// 			charsClass: 'char',
-// 			autoSplit: true,
-// 			onSplit: (self) => {
-// 				if (index !== 0) {
-// 					gsap.timeline({
-// 						scrollTrigger: {
-// 							trigger: trigger,
-// 							start: 'top top',
-// 							end: 'top top',
-// 							toggleActions: 'play none play reverse',
-// 							scrub: false,
-// 							// fastScrollEnd: true,
-// 						}
-// 					})
-// 						.to(self.chars, {
-// 							stagger: {
-// 								amount: 0.1
-// 							},
-// 							y: '0%',
-// 							ease: 'power4.out',
-// 						})
-// 						.to(numberText, {
-// 							opacity: 1,
-// 						}, 0)
-// 				}
-// 				if (index != bigNumbers.length - 1) {
-// 					gsap.timeline({
-// 						scrollTrigger: {
-// 							trigger: trigger,
-// 							start: 'bottom top',
-// 							toggleActions: 'play none play reverse',
-// 							scrub: false,
-// 							// fastScrollEnd: true,
-// 						}
-// 					})
-// 						.to(self.chars, {
-// 							stagger: {
-// 								amount: 0.1
-// 							},
-// 							y: '-100%',
-// 							ease: 'power4.out',
-// 						})
-// 						.to(numberText, {
-// 							opacity: 0,
-// 						}, 0)
-// 				}
-// 			}
-// 		})
-// 	})
-// }
-
 const initMediaText = () => {
 	const mediaText = document.querySelector('.media-text__medias')
 	if (!mediaText) return;
@@ -717,9 +670,9 @@ const initMediaText = () => {
 		on: {
 			slideChange: () => {
 				gsap.fromTo('.media-text .timeline', {
-					scaleX: 0,
+					clipPath: 'inset(0 100% 0 0)',
 				}, {
-					scaleX: 1,
+					clipPath: 'inset(0 0% 0 0)',
 					duration,
 					ease: 'linear',
 				})
@@ -899,7 +852,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load
 	initHrs()
-	// initBigNumbers()
+	initPlusMask()
 	initMediaText()
 	initMediaTrail()
 	watchPageHeaderVisibility()
