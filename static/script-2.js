@@ -519,9 +519,9 @@ const initPlusMask = () => {
 	if (!plusMask) return
 	gsap.to(plusMask, {
 		scrollTrigger: {
-			trigger: plusMask,
-			start: 'top 60%',
-			end: 'top 40%',
+			trigger: plusMask.closest('section'),
+			start: 'top bottom',
+			end: 'top top',
 			scrub: window.innerWidth > 1024 ? true : false,
 			toggleActions: 'play none play reverse',
 		},
