@@ -692,6 +692,40 @@ export const initMediaTrail = () => {
 			})
 		})
 	})
+	mm.add('(max-width: 1023px)', () => {
+		gsap.set('.cta__media-item:nth-of-type(1), .cta__media-item:nth-of-type(6)', {
+			rotate: -4,
+		})
+		gsap.set('.cta__media-item:nth-of-type(3), .cta__media-item:nth-of-type(4)', {
+			rotate: 4,
+		})
+		gsap.to('.cta__media-item:nth-of-type(-n + 3)', {
+			scrollTrigger: {
+				trigger: '.cta__media-trail',
+				start: 'top center',
+			},
+			stagger: {
+				amount: 0.1,
+				from: 'center',
+			},
+			scale: 1,
+			duration: 1,
+			ease: 'power4.inOut',
+		})
+		gsap.to('.cta__media-item:nth-of-type(n + 4):nth-child(-n+7)', {
+			scrollTrigger: {
+				trigger: '.cta__media-trail',
+				start: 'top center',
+			},
+			stagger: {
+				amount: 0.1,
+				from: 'center',
+			},
+			scale: 1,
+			duration: 1,
+			ease: 'power4.inOut',
+		})
+	})
 }
 
 class MediaTrail {
