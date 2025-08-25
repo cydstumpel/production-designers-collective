@@ -4,7 +4,6 @@
 let canvasVisible = true;
 let src = 'color'  // Special flag for color mode
 let color = '#000000'  // Change this hex color to any color you want
-let loop = true;
 let restore = true;
 let restoreTime = 5;
 let radius = window.innerWidth / 48;
@@ -496,6 +495,25 @@ class Brush {
 	}
 }
 
+const watchPageHeaderVisibility = () => {
+	const observer = new IntersectionObserver((entries) => {
+		entries.forEach(entry => {
+			if (entry.isIntersecting) {
+				gsap.set('.page-header canvas', {
+					autoAlpha: 1,
+				})
+			} else {
+				gsap.set('.page-header canvas', {
+					autoAlpha: 0,
+				})
+			}
+		})
+	}, {
+		root: null,
+	})
+	observer.observe(document.querySelector('.page-header'))
+}
+
 const initHeaderCanvas = () => {
 	// Get canvas elements after DOM is loaded
 	const canvasEl = document.getElementById('canvas');
@@ -524,54 +542,6 @@ const initHeaderCanvas = () => {
 		canvas.destroy();
 	};
 };
-
-
-const initPageHeaderScroll = () => {
-	const pageHeader = document.querySelector('.page-header')
-	if (!pageHeader) return
-
-	const tl = gsap.timeline({
-		scrollTrigger: {
-			trigger: pageHeader,
-			start: window.innerWidth > 750 ? 'top top' : 'top -30%',
-			end: window.innerWidth > 750 ? 'top -30%' : 'top -50%',
-			scrub: true,
-			// toggleActions: 'play none play reverse',
-			onEnter: () => {
-				gsap.set('.overlay', {
-					pointerEvents: 'none',
-				})
-				gsap.set('canvas', {
-					autoAlpha: 1
-				})
-				canvasVisible = true;
-			},
-			onLeave: () => {
-				gsap.set('.overlay', {
-					pointerEvents: 'auto',
-				})
-				gsap.set('canvas', {
-					autoAlpha: 0,
-				})
-				canvasVisible = false;
-			},
-			onEnterBack: () => {
-				gsap.set('.overlay', {
-					pointerEvents: 'none',
-				})
-				gsap.set('canvas', {
-					autoAlpha: 1
-				})
-				canvasVisible = true;
-			},
-		}
-	})
-		.to('.overlay', {
-			opacity: 1,
-			duration: 1,
-			ease: 'power4.out',
-		})
-}
 
 // ========================
 // Scroll Trigger Stagger Text
@@ -666,66 +636,66 @@ const initHrs = () => {
 // Big Numbers Stagger Text
 // ========================
 
-const initBigNumbers = () => {
-	const bigNumbers = document.querySelectorAll('.two-column-text__number')
-	if (!bigNumbers) return;
-	bigNumbers.forEach((number, index) => {
-		const trigger = document.querySelector(`.two-column-text__trigger:nth-child(${index + 1})`)
-		const numberHeading = number.querySelector('h3')
-		const numberText = number.querySelector('p')
-		new SplitText(numberHeading, {
-			type: 'chars, lines',
-			linesClass: 'line',
-			charsClass: 'char',
-			autoSplit: true,
-			onSplit: (self) => {
-				if (index !== 0) {
-					gsap.timeline({
-						scrollTrigger: {
-							trigger: trigger,
-							start: 'top top',
-							end: 'top top',
-							toggleActions: 'play none play reverse',
-							scrub: false,
-							// fastScrollEnd: true,
-						}
-					})
-						.to(self.chars, {
-							stagger: {
-								amount: 0.1
-							},
-							y: '0%',
-							ease: 'power4.out',
-						})
-						.to(numberText, {
-							opacity: 1,
-						}, 0)
-				}
-				if (index != bigNumbers.length - 1) {
-					gsap.timeline({
-						scrollTrigger: {
-							trigger: trigger,
-							start: 'bottom top',
-							toggleActions: 'play none play reverse',
-							scrub: false,
-							// fastScrollEnd: true,
-						}
-					})
-						.to(self.chars, {
-							stagger: {
-								amount: 0.1
-							},
-							y: '-100%',
-							ease: 'power4.out',
-						})
-						.to(numberText, {
-							opacity: 0,
-						}, 0)
-				}
-			}
-		})
-	})
-}
+// const initBigNumbers = () => {
+// 	const bigNumbers = document.querySelectorAll('.two-column-text__number')
+// 	if (!bigNumbers) return;
+// 	bigNumbers.forEach((number, index) => {
+// 		const trigger = document.querySelector(`.two-column-text__trigger:nth-child(${index + 1})`)
+// 		const numberHeading = number.querySelector('h3')
+// 		const numberText = number.querySelector('p')
+// 		new SplitText(numberHeading, {
+// 			type: 'chars, lines',
+// 			linesClass: 'line',
+// 			charsClass: 'char',
+// 			autoSplit: true,
+// 			onSplit: (self) => {
+// 				if (index !== 0) {
+// 					gsap.timeline({
+// 						scrollTrigger: {
+// 							trigger: trigger,
+// 							start: 'top top',
+// 							end: 'top top',
+// 							toggleActions: 'play none play reverse',
+// 							scrub: false,
+// 							// fastScrollEnd: true,
+// 						}
+// 					})
+// 						.to(self.chars, {
+// 							stagger: {
+// 								amount: 0.1
+// 							},
+// 							y: '0%',
+// 							ease: 'power4.out',
+// 						})
+// 						.to(numberText, {
+// 							opacity: 1,
+// 						}, 0)
+// 				}
+// 				if (index != bigNumbers.length - 1) {
+// 					gsap.timeline({
+// 						scrollTrigger: {
+// 							trigger: trigger,
+// 							start: 'bottom top',
+// 							toggleActions: 'play none play reverse',
+// 							scrub: false,
+// 							// fastScrollEnd: true,
+// 						}
+// 					})
+// 						.to(self.chars, {
+// 							stagger: {
+// 								amount: 0.1
+// 							},
+// 							y: '-100%',
+// 							ease: 'power4.out',
+// 						})
+// 						.to(numberText, {
+// 							opacity: 0,
+// 						}, 0)
+// 				}
+// 			}
+// 		})
+// 	})
+// }
 
 const initMediaText = () => {
 	const mediaText = document.querySelector('.media-text__medias')
@@ -929,10 +899,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 	gsap.registerPlugin(SplitText, ScrollTrigger)
 	// wait for akzidenz font to load
 	initHrs()
-	initBigNumbers()
+	// initBigNumbers()
 	initMediaText()
 	initMediaTrail()
-	initPageHeaderScroll()
+	watchPageHeaderVisibility()
 	document.fonts.ready.then(function () {
 		initStaggerText()
 	})
